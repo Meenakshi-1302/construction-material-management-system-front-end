@@ -3,15 +3,13 @@ import axios from 'axios';
 import AdminNavbar from './AdminNavbar';
 
 const BASE_URL = 'http://localhost:8085/suppliers/all';
-const MATERIALS_URL = 'http://localhost:8085/materials/all';
+const MATERIALS_URL = 'http://localhost:8085/materials/all'; // Replace with your actual materials endpoint
 
 const SuppliersPage = () => {
   const [suppliers, setSuppliers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [selectedMaterial, setSelectedMaterial] = useState('');
-  const [modalSuppliers, setModalSuppliers] = useState([]);
   const [formData, setFormData] = useState({
     supplierName: '',
     materialQuality: '',
@@ -50,6 +48,7 @@ const SuppliersPage = () => {
   }, []);
 
   const handleRequestClick = (supplierId) => {
+    // Handle the button click here
     alert(`Request sent to supplier with ID: ${supplierId}`);
   };
 
@@ -83,7 +82,7 @@ const SuppliersPage = () => {
 
   const handleFormSubmit = async (e) => {
     e.preventDefault();
-    console.log('Submitting form data:', formData);
+    console.log('Submitting form data:', formData); // Log form data before sending
   
     try {
       const data = new FormData();
@@ -96,23 +95,18 @@ const SuppliersPage = () => {
       data.append("password", formData.password);
       data.append("materialId", formData.material);
       const response = await axios.post('http://localhost:8085/suppliers', data);
-      console.log('Response from server:', response.data);
+      await axios.post('http://localhost:8085/suppliers/sendmail', response.data);
+      console.log('Response from server:', response.data); // Log response from server
       alert('Supplier added successfully');
-      handleModalClose();
+      handleModalClose(); // Close modal after successful submission
     } catch (err) {
-      console.error('Error adding supplier:', err);
+      console.error('Error adding supplier:', err); // Log error details
       alert('Failed to add supplier');
     }
   };
 
-  const handleCardClick = (materialName) => {
-    if (materialName == 'Cement') {
-      const filteredSuppliers = suppliers.filter(supplier => supplier.material.materialName === materialName);
-      setModalSuppliers(filteredSuppliers);
-      setIsModalOpen(true);
-    } else {
-      alert(`Clicked on ${materialName}`);
-    }
+  const handleCardClick = (cardName) => {
+    alert(`Clicked on ${cardName}`);
   };
 
   if (loading) {
@@ -147,8 +141,8 @@ const SuppliersPage = () => {
                 alt="Cement"
                 className="w-full h-32 object-cover rounded-t-lg mb-4 transition-transform transform hover:scale-110"
               />
-              <h3 className="text-lg font-semibold mb-2">Card 1</h3>
-              <p>Cement</p>
+              <h3 className="text-lg font-semibold mb-2">Cement</h3>
+              
             </div>
             <div 
               className="bg-white shadow-md rounded-lg p-4 cursor-pointer transition-transform transform hover:scale-105 hover:shadow-lg"
@@ -159,8 +153,8 @@ const SuppliersPage = () => {
                 alt="Paints"
                 className="w-full h-32 object-cover rounded-t-lg mb-4 transition-transform transform hover:scale-110"
               />
-              <h3 className="text-lg font-semibold mb-2">Card 2</h3>
-              <p>Paints</p>
+              <h3 className="text-lg font-semibold mb-2">Paints</h3>
+             
             </div>
             <div 
               className="bg-white shadow-md rounded-lg p-4 cursor-pointer transition-transform transform hover:scale-105 hover:shadow-lg"
@@ -171,8 +165,8 @@ const SuppliersPage = () => {
                 alt="Rods"
                 className="w-full h-32 object-cover rounded-t-lg mb-4 transition-transform transform hover:scale-110"
               />
-              <h3 className="text-lg font-semibold mb-2">Card 3</h3>
-              <p>Rods</p>
+              <h3 className="text-lg font-semibold mb-2">Steel Rods</h3>
+             
             </div>
             <div 
               className="bg-white shadow-md rounded-lg p-4 cursor-pointer transition-transform transform hover:scale-105 hover:shadow-lg"
@@ -183,8 +177,8 @@ const SuppliersPage = () => {
                 alt="Bricks"
                 className="w-full h-32 object-cover rounded-t-lg mb-4 transition-transform transform hover:scale-110"
               />
-              <h3 className="text-lg font-semibold mb-2">Card 4</h3>
-              <p>Bricks</p>
+              <h3 className="text-lg font-semibold mb-2">Bricks</h3>
+              
             </div>
           </div>
 
@@ -242,40 +236,126 @@ const SuppliersPage = () => {
       {isModalOpen && (
         <div className="fixed inset-0 bg-gray-800 bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg shadow-lg p-6 max-w-md w-full">
-            <h2 className="text-xl font-bold mb-4">Suppliers for {selectedMaterial}</h2>
-            {modalSuppliers.length > 0 ? (
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-200 text-gray-600">
-                  <tr>
-                    <th className="px-6 py-3 text-left text-sm font-medium uppercase tracking-wider">Name</th>
-                    <th className="px-6 py-3 text-left text-sm font-medium uppercase tracking-wider">Quality</th>
-                    <th className="px-6 py-3 text-left text-sm font-medium uppercase tracking-wider">Location</th>
-                    <th className="px-6 py-3 text-left text-sm font-medium uppercase tracking-wider">Email</th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
-                  {modalSuppliers.map((supplier) => (
-                    <tr key={supplier.supplierId}>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{supplier.supplierName}</td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{supplier.materialQuality}</td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{supplier.location}</td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{supplier.email}</td>
-                    </tr>
+            <h2 className="text-xl font-bold mb-4">Add Supplier</h2>
+            <form onSubmit={handleFormSubmit}>
+              <div className="mb-4">
+                <label className="block text-sm font-medium mb-1" htmlFor="supplierName">Supplier Name</label>
+                <input
+                  type="text"
+                  id="supplierName"
+                  name="supplierName"
+                  value={formData.supplierName}
+                  onChange={handleInputChange}
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2"
+                  required
+                />
+              </div>
+              <div className="mb-4">
+                <label className="block text-sm font-medium mb-1" htmlFor="materialQuality">Material Quality</label>
+                <input
+                  type="text"
+                  id="materialQuality"
+                  name="materialQuality"
+                  value={formData.materialQuality}
+                  onChange={handleInputChange}
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2"
+                  required
+                />
+              </div>
+              <div className="mb-4">
+                <label className="block text-sm font-medium mb-1" htmlFor="location">Location</label>
+                <input
+                  type="text"
+                  id="location"
+                  name="location"
+                  value={formData.location}
+                  onChange={handleInputChange}
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2"
+                  required
+                />
+              </div>
+              <div className="mb-4">
+                <label className="block text-sm font-medium mb-1" htmlFor="estimatedDelivery">Estimated Delivery</label>
+                <input
+                  type="text"
+                  id="estimatedDelivery"
+                  name="estimatedDelivery"
+                  value={formData.estimatedDelivery}
+                  onChange={handleInputChange}
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2"
+                  required
+                />
+              </div>
+              <div className="mb-4">
+                <label className="block text-sm font-medium mb-1" htmlFor="email">Email</label>
+                <input
+                  type="email"
+                  id="email"
+                  name="email"
+                  value={formData.email}
+                  onChange={handleInputChange}
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2"
+                  required
+                />
+              </div>
+              <div className="mb-4">
+                <label className="block text-sm font-medium mb-1" htmlFor="contactNumber">Contact Number</label>
+                <input
+                  type="text"
+                  id="contactNumber"
+                  name="contactNumber"
+                  value={formData.contactNumber}
+                  onChange={handleInputChange}
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2"
+                  required
+                />
+              </div>
+              <div className="mb-4">
+                <label className="block text-sm font-medium mb-1" htmlFor="password">Password</label>
+                <input
+                  type="password"
+                  id="password"
+                  name="password"
+                  value={formData.password}
+                  onChange={handleInputChange}
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2"
+                  required
+                />
+              </div>
+              <div className="mb-4">
+                <label className="block text-sm font-medium mb-1" htmlFor="material">Material</label>
+                <select
+                  id="material"
+                  name="material"
+                  value={formData.material}
+                  onChange={handleMaterialChange}
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2"
+                  required
+                >
+                  <option value="">Select a material</option>
+                  {materials.map((material) => (
+                    <option key={material.materialId} value={material.materialId}>
+                      {material.materialName}
+                    </option>
                   ))}
-                </tbody>
-              </table>
-            ) : (
-              <p className="text-gray-600">No suppliers found for {selectedMaterial}</p>
-            )}
-            <div className="flex justify-end mt-4">
-              <button
-                type="button"
-                onClick={handleModalClose}
-                className="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600 transition-colors"
-              >
-                Close
-              </button>
-            </div>
+                </select>
+              </div>
+              <div className="flex justify-end">
+                <button
+                  type="submit"
+                  className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition-colors mr-2"
+                >
+                  Submit
+                </button>
+                <button
+                  type="button"
+                  onClick={handleModalClose}
+                  className="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600 transition-colors"
+                >
+                  Cancel
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}
