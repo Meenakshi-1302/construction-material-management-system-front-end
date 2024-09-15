@@ -1,4 +1,3 @@
-// src/Admin/AdminDashboard.jsx
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import AdminNavbar from './AdminNavbar';
@@ -12,19 +11,6 @@ import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, BarElement, Title, Tooltip, Legend);
 
 // Sample data for the charts
-const lineChartData = {
-  labels: ['January', 'February', 'March', 'April', 'May', 'June', 'July'],
-  datasets: [
-    {
-      label: 'User Growth',
-      data: [30, 50, 75, 90, 100, 120, 150],
-      fill: false,
-      borderColor: 'rgba(75, 192, 192, 1)',
-      tension: 0.1
-    }
-  ]
-};
-
 const barChartData = {
   labels: ['January', 'February', 'March', 'April', 'May'],
   datasets: [
@@ -41,25 +27,87 @@ const barChartData = {
 // Main Admin Dashboard Component
 const AdminDashboard = () => {
   const [userCount, setUserCount] = useState(0);
+  const [supplierCount, setSupplierCount] = useState(0);
+  const [inventoryCount, setInventoryCount] = useState(0);
+  const [lineChartData, setLineChartData] = useState({
+    labels: [],
+    datasets: [
+      {
+        label: 'User Growth',
+        data: [],
+        fill: false,
+        borderColor: 'rgba(75, 192, 192, 1)',
+        tension: 0.1
+      }
+    ]
+  });
 
   useEffect(() => {
-    const fetchUserCount = async () => {
+    const fetchUserData = async () => {
       try {
         const response = await axios.get('http://localhost:8085/users/all');
-        setUserCount(response.data.length); // Assuming the API returns an array of users
+        const users = response.data;
+
+        // Transform data for chart
+        const groupedData = users.reduce((acc, user) => {
+          const month = new Date(user.registrationDate).toLocaleString('default', { month: 'short' });
+          if (!acc[month]) {
+            acc[month] = 0;
+          }
+          acc[month]++;
+          return acc;
+        }, {});
+
+        const labels = Object.keys(groupedData);
+        const data = Object.values(groupedData);
+
+        setLineChartData({
+          labels,
+          datasets: [
+            {
+              label: 'User Growth',
+              data,
+              fill: false,
+              borderColor: 'rgba(75, 192, 192, 1)',
+              tension: 0.1
+            }
+          ]
+        });
+
+        setUserCount(users.length);
       } catch (error) {
-        console.error('Failed to fetch user count:', error);
+        console.error('Failed to fetch user data:', error);
       }
     };
 
-    fetchUserCount();
+    const fetchSupplierCount = async () => {
+      try {
+        const response = await axios.get('http://localhost:8085/suppliers/all');
+        setSupplierCount(response.data.length);
+      } catch (error) {
+        console.error('Failed to fetch supplier count:', error);
+      }
+    };
+
+    const fetchInventoryCount = async () => {
+      try {
+        const response = await axios.get('http://localhost:8085/inventory/all');
+        setInventoryCount(response.data.length);
+      } catch (error) {
+        console.error('Failed to fetch inventory count:', error);
+      }
+    };
+
+    fetchUserData();
+    fetchSupplierCount();
+    fetchInventoryCount();
   }, []);
 
   return (
     <div className="flex flex-col min-h-screen">
       <AdminNavbar />
 
-      <div className="flex flex-1 pt-16 transition-transform duration-300 ease-in-out"> {/* Added transition for smoother movement */}
+      <div className="flex flex-1 pt-16 transition-transform duration-300 ease-in-out">
         <Sidebar />
 
         {/* Main Content */}
@@ -67,11 +115,11 @@ const AdminDashboard = () => {
           {/* Charts */}
           <div className="w-full max-w-4xl mx-auto mb-8">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-              <div className="bg-white shadow-lg rounded-lg p-6 transform transition-transform hover:scale-105 ease-in-out duration-300"> {/* Scale animation */}
+              <div className="bg-white shadow-lg rounded-lg p-6 transform transition-transform hover:scale-105 ease-in-out duration-300">
                 <h3 className="text-xl font-semibold mb-4">User Growth</h3>
                 <Line data={lineChartData} />
               </div>
-              <div className="bg-white shadow-lg rounded-lg p-6 transform transition-transform hover:scale-105 ease-in-out duration-300"> {/* Scale animation */}
+              <div className="bg-white shadow-lg rounded-lg p-6 transform transition-transform hover:scale-105 ease-in-out duration-300">
                 <h3 className="text-xl font-semibold mb-4">Monthly Revenue</h3>
                 <Bar data={barChartData} />
               </div>
@@ -79,17 +127,17 @@ const AdminDashboard = () => {
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
               {/* Stats Cards */}
-              <div className="bg-white shadow-lg rounded-lg p-6 flex flex-col items-center transform transition-transform hover:scale-105 ease-in-out duration-300"> {/* Scale animation */}
+              <div className="bg-white shadow-lg rounded-lg p-6 flex flex-col items-center transform transition-transform hover:scale-105 ease-in-out duration-300">
                 <h3 className="text-xl font-semibold mb-4">User Count</h3>
                 <p className="text-2xl font-bold">{userCount}</p>
               </div>
-              <div className="bg-white shadow-lg rounded-lg p-6 flex flex-col items-center transform transition-transform hover:scale-105 ease-in-out duration-300"> {/* Scale animation */}
+              <div className="bg-white shadow-lg rounded-lg p-6 flex flex-col items-center transform transition-transform hover:scale-105 ease-in-out duration-300">
                 <h3 className="text-xl font-semibold mb-4">Inventory Count</h3>
-                <p className="text-2xl font-bold">456</p>
+                <p className="text-2xl font-bold">{inventoryCount}</p>
               </div>
-              <div className="bg-white shadow-lg rounded-lg p-6 flex flex-col items-center transform transition-transform hover:scale-105 ease-in-out duration-300"> {/* Scale animation */}
+              <div className="bg-white shadow-lg rounded-lg p-6 flex flex-col items-center transform transition-transform hover:scale-105 ease-in-out duration-300">
                 <h3 className="text-xl font-semibold mb-4">Supplier Count</h3>
-                <p className="text-2xl font-bold">789</p>
+                <p className="text-2xl font-bold">{supplierCount}</p>
               </div>
             </div>
 

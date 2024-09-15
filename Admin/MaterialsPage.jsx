@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { FaHome, FaFilter, FaPlus, FaArrowLeft, FaEdit, FaTrash } from 'react-icons/fa';
+import { FaHome, FaFilter, FaPlus, FaArrowLeft, FaTrash } from 'react-icons/fa';
 import { useNavigate } from 'react-router-dom';
 import AdminNavbar from './AdminNavbar';
+import { ToastContainer, toast } from 'react-toastify'; // Import ToastContainer and toast
+import 'react-toastify/dist/ReactToastify.css'; // Import the CSS
 
 const BASE_URL = 'http://localhost:8085';
 
@@ -12,6 +14,7 @@ const MaterialsPage = () => {
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [minPrice, setMinPrice] = useState('');
   const [maxPrice, setMaxPrice] = useState('');
+  const [materialNameFilter, setMaterialNameFilter] = useState(''); // New state for materialName filter
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [newMaterial, setNewMaterial] = useState({
     materialId: '',
@@ -26,6 +29,8 @@ const MaterialsPage = () => {
     picture: null,
   });
   const [editingMaterial, setEditingMaterial] = useState(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 4;
 
   const navigate = useNavigate();
 
@@ -48,6 +53,7 @@ const MaterialsPage = () => {
 
   const handleCategoryChange = (category) => {
     setSelectedCategory(category);
+    setCurrentPage(1); // Reset to first page when category changes
   };
 
   const handleMinPriceChange = (e) => {
@@ -58,16 +64,30 @@ const MaterialsPage = () => {
     setMaxPrice(e.target.value);
   };
 
+  const handleMaterialNameFilterChange = (e) => {
+    setMaterialNameFilter(e.target.value);
+  };
+
   const filteredMaterials = materials.filter((material) => {
     const matchesCategory = selectedCategory === 'All' || material.category === selectedCategory;
     const matchesMinPrice = minPrice === '' || material.unitPrice >= parseFloat(minPrice);
     const matchesMaxPrice = maxPrice === '' || material.unitPrice <= parseFloat(maxPrice);
-    return matchesCategory && matchesMinPrice && matchesMaxPrice;
+    const matchesMaterialName = material.materialName.toLowerCase().includes(materialNameFilter.toLowerCase());
+    return matchesCategory && matchesMinPrice && matchesMaxPrice && matchesMaterialName;
   });
+
+  const indexOfLastItem = currentPage * itemsPerPage;
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+  const currentMaterials = filteredMaterials.slice(indexOfFirstItem, indexOfLastItem);
+
+  const totalPages = Math.ceil(filteredMaterials.length / itemsPerPage);
+
+  const handlePageChange = (pageNumber) => {
+    setCurrentPage(pageNumber);
+  };
 
   const handleOpenModal = async (material = null) => {
     if (material) {
-      // Populate the form with the existing material details for editing
       setNewMaterial({
         ...material,
         picture: null, // Clear picture for editing (optional)
@@ -75,13 +95,11 @@ const MaterialsPage = () => {
       });
       setEditingMaterial(material);
     } else {
-      // Initialize the form for creating a new material
       setNewMaterial({
         materialId: '',
         unitPrice: '',
         quantity: '',
         dateOfLastPurchase: '',
-      
       });
       setEditingMaterial(null);
     }
@@ -117,38 +135,35 @@ const MaterialsPage = () => {
       if (newMaterial.picture) {
         formData.append('picture', newMaterial.picture);
       }
-  
+
       if (editingMaterial) {
-        // Ensure materialId is correctly set
         if (!newMaterial.materialId) {
           throw new Error('Material ID is missing.');
         }
-        // Update existing material
         await axios.put(`${BASE_URL}/materials/${newMaterial.materialId}`, formData, {
           headers: {
             'Content-Type': 'multipart/form-data',
           },
         });
       } else {
-        // Add new material
-        await axios.post(`${BASE_URL}/materials/edit`, formData, {
+        await axios.post(`${BASE_URL}/materials`, formData, {
           headers: {
             'Content-Type': 'multipart/form-data',
           },
         });
+        toast.success('Material added successfully!');
       }
-  
-      // Fetch updated list of materials
+
       const materialsResponse = await axios.get(`${BASE_URL}/materials/all`);
       setMaterials(materialsResponse.data);
       handleCloseModal();
     } catch (error) {
       console.error('Failed to save material', error);
+      toast.error('Failed to add material');
     }
   };
 
   const handleDelete = async (id) => {
-    // Show confirmation dialog
     const confirmed = window.confirm('Are you sure you want to delete this material?');
     if (confirmed) {
       try {
@@ -157,6 +172,7 @@ const MaterialsPage = () => {
         setMaterials(materialsResponse.data);
       } catch (error) {
         console.error('Failed to delete material', error);
+        toast.error('Failed to delete material');
       }
     }
   };
@@ -220,24 +236,34 @@ const MaterialsPage = () => {
                 />
               </div>
             </div>
+            <div className="mt-4">
+              <h3 className="text-md font-semibold">Filter by Material Name</h3>
+              <input
+                type="text"
+                value={materialNameFilter}
+                onChange={handleMaterialNameFilterChange}
+                placeholder="Material Name"
+                className="w-full px-4 py-2 border rounded"
+              />
+            </div>
           </div>
         </div>
         <div className="flex-1">
           <div className="bg-white shadow-lg rounded-lg p-6">
-            <div className="flex justify-end mb-4">
-              <button 
-                className="bg-orange-600 text-black px-4 py-2 rounded-lg flex items-center hover:bg-orange-400 transition-colors duration-300"
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-xl font-semibold">Materials List</h2>
+              <button
                 onClick={() => handleOpenModal()}
+                className="bg-orange-600 text-black px-4 py-2 rounded-lg flex items-center hover:bg-orange-400 transition-colors duration-300"
               >
                 <FaPlus className="mr-2" />
                 Add Material
               </button>
             </div>
-            <h2 className="text-2xl font-bold mb-4">Materials Details</h2>
             <table className="min-w-full divide-y divide-gray-300">
               <thead className="bg-gray-200 text-gray-600">
                 <tr>
-                  <th className="px-6 py-3 text-left text-sm font-medium uppercase tracking-wider">Material ID</th>
+                  {/* <th className="px-6 py-3 text-left text-sm font-medium uppercase tracking-wider">Material ID</th> */}
                   <th className="px-6 py-3 text-left text-sm font-medium uppercase tracking-wider">Image</th>
                   <th className="px-6 py-3 text-left text-sm font-medium uppercase tracking-wider">Name</th>
                   <th className="px-6 py-3 text-left text-sm font-medium uppercase tracking-wider">Category</th>
@@ -247,9 +273,9 @@ const MaterialsPage = () => {
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-300">
-                {filteredMaterials.map((material) => (
+                {currentMaterials.map((material) => (
                   <tr key={material.id} className="hover:bg-gray-50 transition-colors duration-300">
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{material.materialId}</td>
+                    {/* <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{material.materialId}</td> */}
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
                       <img
                         src={`data:image/jpeg;base64,${material.picture}`}
@@ -264,14 +290,7 @@ const MaterialsPage = () => {
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
                       <div className="flex space-x-2">
                         <button
-                          onClick={() => handleOpenModal(material)}
-                          className="text-blue-500 hover:text-blue-700"
-                          aria-label="Edit"
-                        >
-                          <FaEdit />
-                        </button>
-                        <button
-                          onClick={() => handleDelete(material.id)}
+                          onClick={() => handleDelete(material.materialId)}
                           className="text-red-500 hover:text-red-700"
                           aria-label="Delete"
                         >
@@ -283,6 +302,26 @@ const MaterialsPage = () => {
                 ))}
               </tbody>
             </table>
+            {/* Pagination Controls */}
+            <div className="mt-4 flex justify-between items-center">
+              <button
+                onClick={() => handlePageChange(currentPage - 1)}
+                disabled={currentPage === 1}
+                className="bg-gray-300 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-400 transition-colors duration-300"
+              >
+                Previous
+              </button>
+              <span className="text-sm text-gray-600">
+                Page {currentPage} of {totalPages}
+              </span>
+              <button
+                onClick={() => handlePageChange(currentPage + 1)}
+                disabled={currentPage === totalPages}
+                className="bg-gray-300 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-400 transition-colors duration-300"
+              >
+                Next
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -291,10 +330,9 @@ const MaterialsPage = () => {
       </footer>
       {isModalOpen && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white p-6 rounded-lg shadow-lg max-w-md w-full">
+          <div className="bg-white p-6 rounded-lg shadow-lg max-w-4xl w-full">
             <h2 className="text-xl font-bold mb-4">{editingMaterial ? 'Edit Material' : 'Add New Material'}</h2>
             <form onSubmit={handleFormSubmit}>
-              {/* Display material ID */}
               {editingMaterial && (
                 <div className="mb-4">
                   <label className="block text-sm font-medium text-gray-700">Material ID</label>
@@ -307,84 +345,116 @@ const MaterialsPage = () => {
                   />
                 </div>
               )}
-               <input
-                type="text"
-                name="materialName"
-                value={newMaterial.materialName}
-                onChange={handleInputChange}
-                placeholder="Material Name"
-                required
-                className="mb-4 w-full px-4 py-2 border rounded"
-              /> 
-               <input
-                type="text"
-                name="category"
-                value={newMaterial.category}
-                onChange={handleInputChange}
-                placeholder="Category"
-                required
-                className="mb-4 w-full px-4 py-2 border rounded"
-              /> 
-               <textarea
-                name="description"
-                value={newMaterial.description}
-                onChange={handleInputChange}
-                placeholder="Description"
-                required
-                className="mb-4 w-full px-4 py-2 border rounded"
-              /> 
-               <input
-                type="text"
-                name="unitOfMeasure"
-                value={newMaterial.unitOfMeasure}
-                onChange={handleInputChange}
-                placeholder="Unit of Measure"
-                required
-                className="mb-4 w-full px-4 py-2 border rounded"
-              /> 
-              <label className="block text-sm font-medium text-gray-700">Unit price</label>
-              <input
-                type="number"
-                name="unitPrice"
-                value={newMaterial.unitPrice}
-                onChange={handleInputChange}
-                placeholder="Unit Price"
-                required
-                className="mb-4 w-full px-4 py-2 border rounded"
-              />
-              <label className="block text-sm font-medium text-gray-700">Quantity</label>
-              <input
-                type="number"
-                name="quantity"
-                value={newMaterial.quantity}
-                onChange={handleInputChange}
-                placeholder="Quantity"
-                required
-                className="mb-4 w-full px-4 py-2 border rounded"
-              />
-              <label className="block text-sm font-medium text-gray-700">Date of Last Purchase</label>
-              <input
-                type="date"
-                name="dateOfLastPurchase"
-                value={newMaterial.dateOfLastPurchase}
-                onChange={handleInputChange}
-                required
-                className="mb-4 w-full px-4 py-2 border rounded"
-              />
-              {/* <input
-                type="date"
-                name="expirationDate"
-                value={newMaterial.expirationDate}
-                onChange={handleInputChange}
-                required
-                className="mb-4 w-full px-4 py-2 border rounded"
-              />
-              <input
-                type="file"
-                name="picture"
-                onChange={handleFileChange}
-                className="mb-4 w-full px-4 py-2 border rounded"
-              /> */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Material Name</label>
+                  <input
+                    type="text"
+                    name="materialName"
+                    value={newMaterial.materialName}
+                    onChange={handleInputChange}
+                    placeholder="Material Name"
+                    required
+                    className="w-full px-4 py-2 border rounded"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Category</label>
+                  <input
+                    type="text"
+                    name="category"
+                    value={newMaterial.category}
+                    onChange={handleInputChange}
+                    placeholder="Category"
+                    required
+                    className="w-full px-4 py-2 border rounded"
+                  />
+                </div>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Description</label>
+                  <textarea
+                    name="description"
+                    value={newMaterial.description}
+                    onChange={handleInputChange}
+                    placeholder="Description"
+                    required
+                    className="w-full px-4 py-2 border rounded"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Unit of Measure</label>
+                  <input
+                    type="text"
+                    name="unitOfMeasure"
+                    value={newMaterial.unitOfMeasure}
+                    onChange={handleInputChange}
+                    placeholder="Unit of Measure"
+                    required
+                    className="w-full px-4 py-2 border rounded"
+                  />
+                </div>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Unit Price</label>
+                  <input
+                    type="number"
+                    name="unitPrice"
+                    value={newMaterial.unitPrice}
+                    onChange={handleInputChange}
+                    placeholder="Unit Price"
+                    required
+                    className="w-full px-4 py-2 border rounded"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Quantity</label>
+                  <input
+                    type="number"
+                    name="quantity"
+                    value={newMaterial.quantity}
+                    onChange={handleInputChange}
+                    placeholder="Quantity"
+                    required
+                    className="w-full px-4 py-2 border rounded"
+                  />
+                </div>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Date of Purchase</label>
+                  <input
+                    type="date"
+                    name="dateOfLastPurchase"
+                    value={newMaterial.dateOfLastPurchase}
+                    onChange={handleInputChange}
+                    required
+                    className="w-full px-4 py-2 border rounded"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Expiration Date</label>
+                  <input
+                    type="date"
+                    name="expirationDate"
+                    value={newMaterial.expirationDate}
+                    onChange={handleInputChange}
+                    required
+                    className="w-full px-4 py-2 border rounded"
+                  />
+                </div>
+              </div>
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-gray-700">Image</label>
+                <input
+                  type="file"
+                  name="picture"
+                  onChange={handleFileChange}
+                  className="w-full px-4 py-2 border rounded"
+                />
+              </div>
               <div className="flex justify-end">
                 <button
                   type="button"
@@ -404,6 +474,7 @@ const MaterialsPage = () => {
           </div>
         </div>
       )}
+      <ToastContainer /> {/* Include ToastContainer to render notifications */}
     </div>
   );
 };

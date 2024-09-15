@@ -3,6 +3,7 @@ import React from 'react';
 import { Link } from 'react-router-dom'; // For navigation, if using react-router
 import Navbar from './User/Navbar';
 import { useSpring, animated } from '@react-spring/web';
+import Banner from './User/Banner';
 
 const LandingPage = () => {
   // Animation settings for the feature cards
@@ -16,7 +17,7 @@ const LandingPage = () => {
   return (
     <div className="bg-gray-100 min-h-screen flex flex-col">
       <Navbar />
-      
+      <Banner/>
       {/* Hero Section */}
       <section className="bg-orange-600 text-white py-20">
         <div className="container mx-auto text-center">
@@ -30,7 +31,9 @@ const LandingPage = () => {
             </button>
           </Link>
         </div>
+       
       </section>
+     
 
       {/* Features Section */}
       <section className="py-16">

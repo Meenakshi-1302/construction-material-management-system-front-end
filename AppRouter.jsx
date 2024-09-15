@@ -14,7 +14,18 @@ import UserNavbar from './User/UserNavbar';
 import MaterialsPage from './Admin/MaterialsPage';
 import UpdateMaterialPage from './Admin/UpdateMaterialPage';
 import SuppliersPage from './Admin/SuppliersPage';
-
+import InventoryPage from './Admin/InventoryPage';
+import AboutPage from './User/AboutPage';
+import ContactPage from './User/ContactPage';
+import Banner from './User/Banner';
+import PaymentPage from './User/PaymentPage';
+import CartPage from './User/CartPage';
+import MaterialDetailsPage from './User/MaterailDetailsPage';
+import PurchaseSummaryPage from './User/PurchaseSummary';
+import OrdersPage from './User/OrdersPage';
+import ProfilePage from './Admin/ProfilePage';
+import UserProfilePage from './User/UserProfile';
+import SupplierHome from './Supplier/SupplierHome';
 
 function AppRouter() {
   return (
@@ -34,10 +45,20 @@ function AppRouter() {
             <Route path="/material-details" element={<MaterialsPage/>}/>
             <Route path="/materials/update/:id" element={<UpdateMaterialPage />} />
             <Route path="/supplier-details" element={<SuppliersPage/>}/>
+            <Route path="/inventory" element={<InventoryPage/>}/>
+            <Route path="/about" element={<AboutPage/>}/>
+            <Route path="/contact" element={<ContactPage/>}/>
+            <Route path="/banner" element={<Banner/>}/>
+            <Route path="/checkout" element={<PaymentPage/>}/>
+            <Route path="/cart" element={<CartPage/>}/>
+            <Route path="/material/:id" element={<MaterialDetailsPage/>}/>
+            <Route path="/purchase-summary" element={<PurchaseSummaryPage/>}/>
+            <Route path="/orders" element={<OrdersPage/>}/>
+            <Route path="/profile" element={<ProfilePage/>}/>
+            <Route path="/userprofile-page" element={<UserProfilePage/>}/>
+            <Route path="/supplierHome" element={<SupplierHome/>}/>
 
 
-
-            
 
         </Routes>
     </Router>
