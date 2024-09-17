@@ -1,0 +1,40 @@
+/* CenteredNotification.css */
+
+.centered-notification {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  padding: 16px;
+  background-color: #d4f5d1; /* Success color */
+  color: #2f855a;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  z-index: 9999;
+}
+
+.centered-notification.error {
+  background-color: #fbd4d4; /* Error color */
+  color: #e53e3e;
+}
+
+.centered-notification.warning {
+  background-color: #fefcbf; /* Warning color */
+  color: #d69e2e;
+}
+
+.notification-content {
+  flex: 1;
+  padding-right: 16px;
+}
+
+.notification-close {
+  background: none;
+  border: none;
+  font-size: 16px;
+  cursor: pointer;
+}
